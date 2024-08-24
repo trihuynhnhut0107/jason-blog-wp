@@ -1,0 +1,60 @@
+{
+    "require": {
+        "nesbot/carbon": "^2.48.0",
+        "monolog/monolog": "^1.25"
+    },
+    "config": {
+        "platform": {
+            "php": "7.2"
+        }
+    },
+    "require-dev": {
+        "brianhenryie/strauss": "^0.5.0"
+    },
+    "scripts": {
+        "strauss": [
+            "@php strauss.phar"
+        ]
+    },
+    "extra": {
+        "strauss": {
+            "target_directory": "vendor-prefixed",
+            "namespace_prefix": "Pramadillo\\PayForPost\\",
+            "classmap_prefix": "Pramadillo_PayForPost_",
+            "constant_prefix": "PWCPPP_",
+            "packages": [
+            ],
+            "override_autoload": {
+                "nesbot/carbon": {
+                    "autoload": {
+                        "psr-4": {
+                            "Carbon\\": "src/Carbon/"
+                        }
+                    },
+                    "classmap": [
+                        "lazy"
+                    ]
+                }
+            },
+            "exclude_from_copy": {
+                "packages": [
+                ],
+                "namespaces": [
+                ],
+                "file_patterns": [
+                ]
+            },
+            "exclude_from_prefix": {
+                "packages": [
+                ],
+                "namespaces": [
+                ],
+                "file_patterns": [
+                    "/^psr.*$/"
+                ]
+            },
+            "namespace_replacement_patterns" : {
+            }
+        }
+    }
+}
