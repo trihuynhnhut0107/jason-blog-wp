@@ -55,6 +55,9 @@ function get_paginated_posts(WP_REST_Request $request) {
 	$cookie = isset($_COOKIE['user']) ? $_COOKIE['user'] : '';
     wp_set_current_user(wp_validate_auth_cookie($cookie, 'logged_in'));
     $current_user = wp_get_current_user();
+	
+	$search = $request->get_param('search') ? sanitize_text_field($request->get_param('search')) : '';
+
     // Retrieve pagination parameters from the request
     $page = $request->get_param('page') ? intval($request->get_param('page')) : 1;
     $per_page = $request->get_param('per_page') ? intval($request->get_param('per_page')) : 10;
@@ -68,6 +71,7 @@ function get_paginated_posts(WP_REST_Request $request) {
         'post_type' => 'post',
         'posts_per_page' => $per_page,
         'paged' => $page,
+		's' => $search, // Add the search term to the query
     );
 
     $query = new WP_Query($args);
