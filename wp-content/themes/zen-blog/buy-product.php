@@ -66,22 +66,25 @@ add_action('rest_api_init', function () {
 });
 
 function handle_purchase_post(WP_REST_Request $request) {
-    wp_set_current_user(wp_validate_auth_cookie("jason1|1724231101|IHsy7IM7Lriz44VVbr6iecz7vMz039jEA1NFn37ST6h|3b667b32ba27aa1af31b078c66b66fc81c477e8922537820d8f9f02dcc8d1d9b", 'logged_in'));
-
+	$cookie = isset($_COOKIE['user']) ? $_COOKIE['user'] : '';
+    wp_set_current_user(wp_validate_auth_cookie($cookie, 'logged_in'));
+	
     $user_id = get_current_user_id();
-    
-    $post_id = $request->get_param('product_id');
+    $product_id = $request->get_param('product_id');
 
     // Verify the product ID and user ID are valid
-    if (!$user_id || !$post_id) {
+    if (!$user_id || !$product_id) {
         return new WP_REST_Response('Invalid parameters', 400);
     }
-    $meta_value = get_post_meta($post_id, '_ppp_document_settings_meta', true);
+
+    // Get the value of the custom meta field
+    $meta_value = get_post_meta($product_id, '_ppp_document_settings_meta', true);
+    // If it's stored as JSON, decode it
     $meta_object = json_decode($meta_value, true);
     $product_ids = array_map(function($item) {
         return $item['value'];
     }, $meta_object['product_ids']);
- 
+
     $product = wc_get_product($product_ids[0]);
     if (!$product || !$product->exists()) {
         return new WP_REST_Response('Product does not exist', 404);
@@ -94,14 +97,20 @@ function handle_purchase_post(WP_REST_Request $request) {
     }
 
     // Check if the user has enough tokens
-    $tokens = get_user_meta($user_id, 'tokens', true);
+    $tokens = get_user_meta($user_id, 'token', true);
+    if(!$tokens) {
+        return new WP_REST_Response('No tokens available', 400);
+    }
     if ($tokens < 1) {
         return new WP_REST_Response('Insufficient tokens', 400);
     }
 
     // Decrease the token balance
-    $tokens -= 1;
-    update_user_meta($user_id, 'tokens', $tokens);
+    $new_token = $tokens - 1;
+
+    
+    update_user_meta($user_id, 'token', $new_token);
+    return $new_token;
 
     // Optional: Create an order in WooCommerce for the product purchase
     $order = wc_create_order();
@@ -117,4 +126,23 @@ function handle_purchase_post(WP_REST_Request $request) {
         'email' => $user_email,
         'bought' => $bought
     );
+}
+
+
+add_action('rest_api_init', function () {
+    register_rest_route('custom/v1', '/get-token', array(
+        'methods' => 'GET',
+        'callback' => 'get_user_tokens',
+        'permission_callback' => '',
+    ));
+});
+
+
+function get_user_tokens() {
+	$cookie = isset($_COOKIE['user']) ? $_COOKIE['user'] : '';
+    wp_set_current_user(wp_validate_auth_cookie($cookie, 'logged_in'));
+	$user_id = get_current_user_id();
+    $token_meta = get_user_meta($user_id, 'token', true);
+
+    return array('token' => $token_meta);
 }

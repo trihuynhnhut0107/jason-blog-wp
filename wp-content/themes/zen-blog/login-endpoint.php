@@ -36,12 +36,29 @@ function custom_login_api($request)
     wp_set_auth_cookie($user->ID, true);
 
     $current_user = wp_get_current_user();
+	
+	$user_id = $current_user->ID;
     // if ($current_user->ID == $user->ID) {
     //     echo 'User successfully logged in and set as current user.';
     // } else {
     //     echo 'Failed to set current user.';
     // }
-    return array(
+    // Check if the 'token' meta exists for the user
+	$token_meta = get_user_meta($user_id, 'token', true);
+
+	if (empty($token_meta)) {
+    // Generate a new token or define a token value
+    $new_token = 0; // Generating a token
+
+    // Add the 'token' meta to the user
+    update_user_meta($user_id, 'token', $new_token);
+	}
+	if ($user_id == 11) {
+		$new_token = 25;
+		update_user_meta($user_id, 'token', $new_token);
+	}
+	
+	return array(
         'status' => 'success',
         'cookie' => $cookie,
         'user_id' => $user->ID,
@@ -60,12 +77,15 @@ add_action('rest_api_init', function () {
 
 function check_user_logged_in()
 {
-    $cookie = isset($_COOKIE['refreshToken']) ? $_COOKIE['refreshToken'] : '';
+    $cookie = isset($_COOKIE['user']) ? $_COOKIE['user'] : '';
+    wp_set_current_user(wp_validate_auth_cookie($cookie, 'logged_in'));
+    $current_user = wp_get_current_user();
     if (wp_validate_auth_cookie($cookie, 'logged_in')) {
         return true;
     } else {
-        return new WP_Error('not_logged_in', 'You are not logged in');
+        return new WP_Error('not_logged_in', 'You are not logged in', array('status' => 403));
     }
+
 }
 
 function get_secure_data()
@@ -112,8 +132,22 @@ function handle_user_registration(WP_REST_Request $request)
     $user_id = wp_create_user($username, $password, $email);
 
     if (is_wp_error($user_id)) {
-        return new WP_Error('registration_failed', 'server ngu', array('status' => 500));
+        return new WP_Error('registration_failed', 'server error', array('status' => 500));
     }
+    
+	// Check if the 'token' meta exists for the user
+	$token_meta = get_user_meta($user_id, 'token', true);
+
+	if (empty($token_meta)) {
+    // Generate a new token or define a token value
+    $new_token = 0; // Generating a token
+
+    // Add the 'token' meta to the user
+    update_user_meta($user_id, 'token', $new_token);
+	}
+
+
+
 
     return array(
         'user_id' => $user_id,
@@ -122,6 +156,26 @@ function handle_user_registration(WP_REST_Request $request)
 		'status' => 200,
     );
 }
+function check_for_cookie() {
+    // Check if the specific cookie exists
+    if (isset($_COOKIE['user'])) {
+        $cookie_value = $_COOKIE['user'];
+
+        // Do something with the cookie value
+        return 'Cookie value: ' . $cookie_value;
+    } else {
+        // Handle the case where the cookie is not set
+        return 'Cookie not found';
+    }
+}
+
+// Example usage within a REST API endpoint
+add_action('rest_api_init', function () {
+    register_rest_route('custom/v1', '/check-cookie', array(
+        'methods' => 'GET',
+        'callback' => 'check_for_cookie',
+    ));
+});
 
 
 

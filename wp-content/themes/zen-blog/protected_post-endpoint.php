@@ -81,10 +81,12 @@ function get_paginated_posts(WP_REST_Request $request) {
         
     foreach ($query->posts as $post) {
         $restrict = new Woocommerce_Pay_Per_Post_Restrict_Content($post->ID, true);
+		$product_id = get_post_meta($post->ID, 'wc_pay_per_post_product_ids', true);
         $posts[] = array(
             'post' => $post,
             'id' => $post->ID,
             'has_access' => $restrict->can_user_view_content(),
+			'product_id' => $product_id, // Include the product_id in the response
         );
     }
 
