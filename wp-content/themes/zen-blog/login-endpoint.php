@@ -53,10 +53,7 @@ function custom_login_api($request)
     // Add the 'token' meta to the user
     update_user_meta($user_id, 'token', $new_token);
 	}
-	if ($user_id == 11) {
-		$new_token = 25;
-		update_user_meta($user_id, 'token', $new_token);
-	}
+	
 	
 	return array(
         'status' => 'success',
