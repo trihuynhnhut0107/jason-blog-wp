@@ -7,12 +7,15 @@ services:
       - db_data:/var/lib/mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: macdev123
-      MYSQL_DATABASE: wordpress
-      MYSQL_USER: wordpress
-      MYSQL_PASSWORD: macdev123
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"  # Expose MySQL on host port 3306
     networks: 
       - wpsite
+
   phpmyadmin:
     depends_on:
       - db
@@ -22,9 +25,10 @@ services:
       - '8080:80'
     environment:
       PMA_HOST: db
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     networks:
       - wpsite
+
   wordpress:
     depends_on:
       - db
@@ -32,14 +36,17 @@ services:
     ports: 
       - '8000:80'
     restart: always
-    volumes: ['./:/var/www/html']
+    volumes:
+      - './wp-content:/var/www/html/wp-content'
     environment:
-      WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: macdev123
+      WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
     networks: 
      - wpsite
+
 networks:
   wpsite:
+
 volumes:
   db_data:
