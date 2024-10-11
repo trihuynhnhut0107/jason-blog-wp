@@ -47,6 +47,7 @@ function login($request)
         update_user_meta($userID, 'token', 0);
         $userToken = 0;
     }
+    
 
     return array(
         'status' => 'success',
