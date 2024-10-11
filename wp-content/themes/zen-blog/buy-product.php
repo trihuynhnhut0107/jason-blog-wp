@@ -9,37 +9,6 @@ add_action('rest_api_init', function () {
     ));
 });
 
-// Handle the product purchase
-function handle_product_purchase(WP_REST_Request $request) {
-    wp_set_current_user(wp_validate_auth_cookie("jason1|1724212507|NAYiBYcytOdJ7l1vfbbKuQkse0MVPL8EJK2LewjgSnb|fe8fa6f0cec16c91c1923d534b4f197c75e2c3fdf3387e33016cb2ab541f4d3b", 'logged_in'));
-
-    $user_id = get_current_user_id();
-    $product_id = sanitize_text_field($request->get_param('product_id'));
-
-    // Check if the product ID is provided and valid
-
-    // Check if the product exists
-    $product = wc_get_product(27);
-    // Create a new order
-    $order = wc_create_order();
-    $order->add_product($product, 1); // Add product to order
-    $order->set_customer_id($user_id);
-    $order->calculate_totals();
-
-    // Process payment
-    $order->set_payment_method('bacs'); // Assuming bank transfer for simplicity
-    $order->set_payment_method_title('Bank Transfer');
-    $order->save();
-    $order->update_status('completed'); // Automatically set to completed for simplicity
-
-    // Generate tokens
-    $tokens = generate_tokens($user_id, 8);
-
-    return array(
-        'order_id' => $order->get_id(),
-        'tokens' => $tokens,
-    );
-}
 
 // Generate tokens and update user meta
 function generate_tokens($user_id, $amount) {
@@ -61,15 +30,17 @@ add_action('rest_api_init', function () {
     register_rest_route('custom/v1', '/buypost', array(
         'methods' => 'POST',
         'callback' => 'handle_purchase_post',
-        'permission_callback' => '',
+        'permission_callback' => '__return true',
     ));
 });
 
+
 function handle_purchase_post(WP_REST_Request $request) {
-	$cookie = isset($_COOKIE['user']) ? $_COOKIE['user'] : '';
-    wp_set_current_user(wp_validate_auth_cookie($cookie, 'logged_in'));
-	
-    $user_id = get_current_user_id();
+
+    if (!(isset($_COOKIE[LOGGED_IN_COOKIE]) && wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in'))) {
+        return WP_REST_Response('No user cookie', 400);
+    } 
+    $user_id = wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in');
     $product_id = $request->get_param('product_id');
 
     // Verify the product ID and user ID are valid

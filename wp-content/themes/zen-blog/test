@@ -6,10 +6,6 @@ add_action('rest_api_init', function () {
         'callback' => 'custom_login_api',
         'permission_callback' => '__return_true',
     ));
-    register_rest_route('custom/v1', '/secure-data', array(
-        'methods' => 'GET',
-        'callback' => 'get_secure_data',
-    ));
 });
 
 // Callback function for login
@@ -67,7 +63,14 @@ function custom_login_api($request)
     );
 }
 
-
+// Example endpoint that requires authentication
+add_action('rest_api_init', function () {
+    register_rest_route('custom/v1', '/secure-data', array(
+        'methods' => 'GET',
+        'callback' => 'get_secure_data',
+        'permission_callback' => 'check_user_logged_in',
+    ));
+});
 
 function check_user_logged_in()
 {
