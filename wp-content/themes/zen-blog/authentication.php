@@ -59,6 +59,8 @@ function login($request)
 function permissionCheck()
 {
     if (isset($_COOKIE[LOGGED_IN_COOKIE]) && wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in')) {
+
+        wp_set_current_user(wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in'));
         return array('loggedIn' => true);
     } else {
         return array('loggedIn' => false);

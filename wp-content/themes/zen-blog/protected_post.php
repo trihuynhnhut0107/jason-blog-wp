@@ -12,9 +12,6 @@ add_action('rest_api_init', function() {
 
 
 function get_paginated_posts(WP_REST_Request $request) {
-    if (!(isset($_COOKIE[LOGGED_IN_COOKIE]) && wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in'))) {
-        return WP_REST_Response('No user cookie', 400);
-    } 
     $user_id = wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in');
 	
 	$search = $request->get_param('search') ? sanitize_text_field($request->get_param('search')) : '';
