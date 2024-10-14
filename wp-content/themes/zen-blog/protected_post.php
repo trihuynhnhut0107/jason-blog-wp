@@ -12,7 +12,7 @@ add_action('rest_api_init', function() {
 
 
 function get_paginated_posts(WP_REST_Request $request) {
-    $user_id = wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in');
+    
 	
 	$search = $request->get_param('search') ? sanitize_text_field($request->get_param('search')) : '';
 
@@ -43,7 +43,7 @@ function get_paginated_posts(WP_REST_Request $request) {
         $posts[] = array(
             'post' => $post,
             'id' => $post->ID,
-            'has_access' => $restrict->can_user_view_content($user_id),
+            'has_access' => $restrict->can_user_view_content(),
 			'product_id' => $product_id, // Include the product_id in the response
         );
     }

@@ -41,6 +41,8 @@ function login($request)
 
     $currentUser = wp_get_current_user();
     $userID = $currentUser->ID;
+    
+    
 
     $userToken = get_user_meta($userID, 'token', true);
     if (empty($userToken)) {
