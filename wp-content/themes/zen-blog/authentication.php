@@ -74,7 +74,7 @@ function signup(WP_REST_Request $request)
     $email = sanitize_email($request->get_param('email'));
 
     if (empty($username) || empty($password) || empty($email)) {
-        return new WP_Error('empty_field', 'Please enter field ', array('status' => 400));
+        return new WP_Error('empty_field', 'Please enter missing fields!', array('status' => 400));
     }
 
     if (username_exists($username)) {
@@ -102,10 +102,7 @@ function signup(WP_REST_Request $request)
     }
 
     return array(
-        'userID' => $userID,
-        'username' => $username,
-        'email' => $email,
-        'status' => 200,
+        'statusCode' => 200,
     );
 }
 
