@@ -25,4 +25,9 @@ function add_cors_http_headers() {
     }
 }
 
+function my_theme_setup() {
+    add_theme_support('post-thumbnails');
+}
+add_action('after_setup_theme', 'my_theme_setup');
+
 add_action('send_headers', 'add_cors_http_headers', 15);

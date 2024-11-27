@@ -51,7 +51,7 @@ function handle_purchase_post(WP_REST_Request $request) {
     }
     $user = get_user_by('ID', $user_id);
     if (!$user) {
-        return new WP_REST_Response('User does not exist', 404);
+        return new WP_REST_Response('User are not logged in', 404);
     }
     $tokens = get_user_meta($user_id, 'token', true);
     

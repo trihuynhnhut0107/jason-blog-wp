@@ -50,11 +50,24 @@ function get_paginated_posts(WP_REST_Request $request) {
     foreach ($query->posts as $post) {
         $restrict = new Woocommerce_Pay_Per_Post_Restrict_Content($post->ID, true);
         $product_id = get_post_meta($post->ID, 'wc_pay_per_post_product_ids', true);
+
+        // Get the featured image URL
+        $featured_image_url = get_the_post_thumbnail_url($post->ID, 'full'); // You can replace 'full' with other image sizes if needed
+
+        // Get the view count or default to 0
+        $view_count = get_post_meta($post->ID, 'view_count', true) ?: 0;
+
+        // Get the reading time from Reading Time WP plugin
+        $reading_time = get_post_meta($post->ID, 'rt_reading_time', true) ?: 'N/A';
+
         $posts[] = array(
             'post' => $post,
             'id' => $post->ID,
             'has_access' => $restrict->can_user_view_content(),
             'product_id' => $product_id, // Include the product_id in the response
+            'featured_image' => $featured_image_url,  // Add the featured image URL to the response
+            'view_count' => $view_count, // Add the view count to the response
+            'reading_time' => $reading_time, // Add the reading time to the response
         );
     }
 
@@ -69,39 +82,53 @@ function get_paginated_posts(WP_REST_Request $request) {
 
     return new WP_REST_Response($response, 200);
 }
+
+
 add_action('rest_api_init', function () {
     register_rest_route('custom/v1', '/post/(?P<slug>[^/]+)', array(
         'methods' => 'GET',
-        'callback' => 'get_single_post',
-        'permission_callback' => 'permissionCheck',
+        'callback' => 'get_single_post'
     ));
 });
 
 function get_single_post(WP_REST_Request $request) {
+    // Get the slug parameter from the request
     $slug = $request->get_param('slug') ? sanitize_title($request->get_param('slug')) : '';
 
+    // Check if slug is provided
     if (empty($slug)) {
         return new WP_REST_Response(array('message' => 'Slug not provided'), 400);
     }
 
+    // Get the post object by slug
     $post = get_page_by_path($slug, OBJECT, 'post');
+    
+    // If no post is found, return a 404 error
     if (!$post) {
         return new WP_REST_Response(array('message' => 'Post not found'), 404);
     }
 
-    // Increment view count
+    // Increment the view count for the post
     $views = get_post_meta($post->ID, 'view_count', true) ?: 0;
     update_post_meta($post->ID, 'view_count', ++$views);
 
+    // Instantiate the Woocommerce Pay Per Post restriction object
     $restrict = new Woocommerce_Pay_Per_Post_Restrict_Content($post->ID, true);
+    
+    // Get the product ID associated with the post
     $product_id = get_post_meta($post->ID, 'wc_pay_per_post_product_ids', true);
 
+    // Get the URL of the featured image
+    $featured_image_url = get_the_post_thumbnail_url($post->ID, 'full');  // 'full' is the image size; you can choose other sizes
+
+    // Return the response with post details, including featured image URL
     return new WP_REST_Response(array(
         'post' => $post,
         'id' => $post->ID,
         'has_access' => $restrict->can_user_view_content(),
         'product_id' => $product_id,
         'view_count' => $views,  // Return the current view count
+        'featured_image' => $featured_image_url,  // Add the featured image URL to the response
     ), 200);
 }
 
