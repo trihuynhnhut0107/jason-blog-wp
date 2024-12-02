@@ -49,7 +49,23 @@ function get_paginated_posts(WP_REST_Request $request) {
         
     foreach ($query->posts as $post) {
         $restrict = new Woocommerce_Pay_Per_Post_Restrict_Content($post->ID, true);
-        $product_id = get_post_meta($post->ID, 'wc_pay_per_post_product_ids', true);
+
+        // Retrieve the _ppp_document_settings_meta and decode it
+        $meta_value = get_post_meta($post->ID, '_ppp_document_settings_meta', true);
+        $meta_data = $meta_value ? json_decode($meta_value, true) : null;
+
+        // Extract the product ID from the meta field
+        $product_id = null;
+        if (!empty($meta_data['product_ids']) && is_array($meta_data['product_ids'])) {
+            $product_id = $meta_data['product_ids'][0]['value'] ?? null;
+        }
+
+        // Get the product price if a product ID exists
+        $product_price = null;
+        if ($product_id) {
+            $product = wc_get_product($product_id);
+            $product_price = $product ? $product->get_price() : null; // Retrieve the price of the product
+        }
 
         // Get the featured image URL
         $featured_image_url = get_the_post_thumbnail_url($post->ID, 'full'); // You can replace 'full' with other image sizes if needed
@@ -65,6 +81,7 @@ function get_paginated_posts(WP_REST_Request $request) {
             'id' => $post->ID,
             'has_access' => $restrict->can_user_view_content(),
             'product_id' => $product_id, // Include the product_id in the response
+            'product_price' => $product_price, // Include the product price in the response
             'featured_image' => $featured_image_url,  // Add the featured image URL to the response
             'view_count' => $view_count, // Add the view count to the response
             'reading_time' => $reading_time, // Add the reading time to the response

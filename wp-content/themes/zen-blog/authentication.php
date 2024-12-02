@@ -62,8 +62,18 @@ function permissionCheck()
 {
     if (isset($_COOKIE[LOGGED_IN_COOKIE]) && wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in')) {
 
-        wp_set_current_user(wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in'));
-        return array('loggedIn' => true);
+        wp_set_current_user(wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in')); // Authenticate user
+
+        $currentUser = wp_get_current_user(); // Get the current user
+        $userID = $currentUser->ID; // Retrieve user ID
+
+        // Fetch the user's token
+        $userToken = get_user_meta($userID, 'token', true);
+
+        return array(
+            'loggedIn' => true,
+            'token' => $userToken
+        );
     } else {
         return array('loggedIn' => false);
     }
