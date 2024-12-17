@@ -12,7 +12,8 @@ add_action('rest_api_init', function() {
 
 
 function get_paginated_posts(WP_REST_Request $request) {
-    
+    $user_id = wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in');
+    wp_set_current_user($user_id);
     $search = $request->get_param('search') ? sanitize_text_field($request->get_param('search')) : '';
 
     // Retrieve pagination parameters from the request
@@ -110,6 +111,9 @@ add_action('rest_api_init', function () {
 
 function get_single_post(WP_REST_Request $request) {
     // Get the slug parameter from the request
+    $user_id = wp_validate_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in');
+    wp_set_current_user($user_id);
+
     $slug = $request->get_param('slug') ? sanitize_title($request->get_param('slug')) : '';
 
     // Check if slug is provided
@@ -138,14 +142,19 @@ function get_single_post(WP_REST_Request $request) {
     // Get the URL of the featured image
     $featured_image_url = get_the_post_thumbnail_url($post->ID, 'full');  // 'full' is the image size; you can choose other sizes
 
+    $product = wc_get_product((int)$product_id[0]);
+    $product_price = $product ? $product->get_price() : null;
     // Return the response with post details, including featured image URL
     return new WP_REST_Response(array(
+        'user' => $user_id,
         'post' => $post,
         'id' => $post->ID,
         'has_access' => $restrict->can_user_view_content(),
         'product_id' => $product_id,
         'view_count' => $views,  // Return the current view count
         'featured_image' => $featured_image_url,  // Add the featured image URL to the response
+        'product_price' => $product_price, // Include the product price in the response
+        'purchased' => $restrict->check_if_purchased
     ), 200);
 }
 

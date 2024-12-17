@@ -38,34 +38,48 @@ function handle_purchase_post(WP_REST_Request $request) {
         return new WP_REST_Response('Invalid parameters', 400);
     }
     $user_id = get_current_user_id();
-    $meta_value = get_post_meta($post_id, '_ppp_document_settings_meta', true);
 
-    $meta_object = json_decode($meta_value, true);
-    $product_ids = array_map(function($item) {
-        return $item['value'];
-    }, $meta_object['product_ids']);
+    $restrict = new Woocommerce_Pay_Per_Post_Restrict_Content($post_id, true);
+    
+    // Get the product ID associated with the post
+    $product_id = get_post_meta($post_id, 'wc_pay_per_post_product_ids', true);
 
-    $product = wc_get_product($product_ids[0]);
-    if (!$product || !$product->exists()) {
-        return new WP_REST_Response('Product does not exist', 404);
+// Ensure $product_id[0] exists and is valid
+    if (!empty($product_id[0])) {
+        // Convert $product_id[0] to an integer
+        $product_id_number = (int) $product_id[0];
+
+        // Fetch the product object using the numeric ID
+        $product = wc_get_product($product_id_number);
+
+        // Check if the product object is valid
+        if ($product) {
+            // Get the product price
+            $product_price = $product->get_price();
+
+            
+        }
+        else {
+            return new WP_REST_Response('Invalid parameters', 404);
+        }
     }
     $user = get_user_by('ID', $user_id);
     if (!$user) {
         return new WP_REST_Response('User are not logged in', 404);
     }
     $tokens = get_user_meta($user_id, 'token', true);
-    
+    update_user_meta($user_id, 'token', 10000);
     if(!$tokens) {
         return new WP_REST_Response('No tokens available', 400);
     }
-    if ($tokens < 1) {
+    if ($tokens < $product_price) {
         return new WP_REST_Response('Insufficient tokens', 400);
     }
 
-    $new_token = $tokens - 1;
+    // $new_token = $tokens - $product_price;
 
     
-    update_user_meta($user_id, 'token', $new_token);
+    
 
     $order = wc_create_order();
     $order->add_product($product, 1);
@@ -74,11 +88,12 @@ function handle_purchase_post(WP_REST_Request $request) {
     $order->save();
     $restrict = new Woocommerce_Pay_Per_Post_Restrict_Content($post_id, true);
     $user_email = $user->user_email;
-    $bought = wc_customer_bought_product( $user_email , $user_id, trim( $product_ids[0] ) );
+    $bought = wc_customer_bought_product( $user_email , $user_id, trim( $product_id_number ) );
     return array (
         'purchased'=> $restrict->check_if_purchased($user_id),
         'email' => $user_email,
-        'bought' => $bought
+        'bought' => $bought,
+        'id' => $product_id_number
     );
 }
 
