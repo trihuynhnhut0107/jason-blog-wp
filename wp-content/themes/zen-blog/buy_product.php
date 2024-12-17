@@ -68,7 +68,7 @@ function handle_purchase_post(WP_REST_Request $request) {
         return new WP_REST_Response('User are not logged in', 404);
     }
     $tokens = get_user_meta($user_id, 'token', true);
-    update_user_meta($user_id, 'token', 10000);
+    
     if(!$tokens) {
         return new WP_REST_Response('No tokens available', 400);
     }
@@ -76,9 +76,9 @@ function handle_purchase_post(WP_REST_Request $request) {
         return new WP_REST_Response('Insufficient tokens', 400);
     }
 
-    // $new_token = $tokens - $product_price;
+    $new_token = $tokens - $product_price;
 
-    
+    update_user_meta($user_id, 'token', $new_token);
     
 
     $order = wc_create_order();
